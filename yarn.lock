@@ -1817,7 +1817,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:^29.5.14":
+"@types/jest-when@npm:^3":
+  version: 3.5.5
+  resolution: "@types/jest-when@npm:3.5.5"
+  dependencies:
+    "@types/jest": "npm:*"
+  checksum: 10c0/65b4df6204860d71908cf1d5b31e03504628f7efdb275ec3a705d99deb5df3abed419a3387d6cbb7c785e64559f70e3c26f117ad26e3707b4241ae08d3d4467a
+  languageName: node
+  linkType: hard
+
+"@types/jest@npm:*, @types/jest@npm:^29.5.14":
   version: 29.5.14
   resolution: "@types/jest@npm:29.5.14"
   dependencies:
@@ -5376,6 +5385,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jest-when@npm:^3.7.0":
+  version: 3.7.0
+  resolution: "jest-when@npm:3.7.0"
+  peerDependencies:
+    jest: ">= 25"
+  checksum: 10c0/0e5cf14a4bfe4aacdf3c748c5b28ea5b04c51072e2ba3d47832586f756cbb849b33c36fffe89bb0741fb836a69bdc1d30072b641dd275b8a27376376c175937e
+  languageName: node
+  linkType: hard
+
 "jest-worker@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest-worker@npm:29.7.0"
@@ -8582,12 +8600,14 @@ __metadata:
     "@semantic-release/exec": "npm:^7.1.0"
     "@semantic-release/git": "npm:^10.0.1"
     "@types/jest": "npm:^29.5.14"
+    "@types/jest-when": "npm:^3"
     "@types/node": "npm:^22.0.0"
     "@yarnpkg/builder": "npm:^4.2.1"
     "@yarnpkg/cli": "npm:^4.7.0"
     "@yarnpkg/core": "npm:^4.2.1"
     clipanion: "npm:^4.0.0-rc.2"
     jest: "npm:^29.7.0"
+    jest-when: "npm:^3.7.0"
     rimraf: "npm:5.0.0"
     semantic-release: "npm:^24.2.5"
     ts-jest: "npm:^29.3.4"

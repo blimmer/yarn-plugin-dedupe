@@ -27,14 +27,14 @@ option.
 |       Option       |                                   Behavior                                   |
 | ------------------ | ---------------------------------------------------------------------------- |
 | `always` (default) | `yarn dedupe` is run after every `yarn` install command                      |
-| `dependabot`       | `yarn dedupe` is run only in GitHub Actions-based dependabot update commands |
+| `dependabot-only`  | `yarn dedupe` is run only in GitHub Actions-based dependabot update commands |
 | `none`             | automatic dedupe is disabled                                                 |
 
 ### Example
 
 ```yml
 # .yarnrc.yml
-dedupePluginMode: dependabot
+dedupePluginMode: dependabot-only
 ```
 
 ## License

@@ -1,8 +1,9 @@
 import {Plugin, type Project} from '@yarnpkg/core';
+import type { InstallOptions } from '@yarnpkg/core/lib/Project';
 import {execute} from '@yarnpkg/shell';
 
 const dedupeModes = ['always', 'dependabot-only', 'never'] as const;
-type DedupeMode = typeof dedupeModes[number];
+export type DedupeMode = typeof dedupeModes[number];
 
 const plugin: Plugin = {
   configuration: {
@@ -15,10 +16,24 @@ const plugin: Plugin = {
     }
   },
   hooks: {
-    afterAllInstalled: async (project: Project) => {
-      const dedupeMode = project.configuration.get('dedupePluginMode');
+    afterAllInstalled: async (project: Project, options: InstallOptions) => {
+      const disablingOptions = ["immutable"];
+      if (disablingOptions.some(option => options[option])) {
+        return;
+      }
 
-      // Ensure dedupeMode is one of the valid choices
+      const currentCommand = getYarnCommand();
+      const disablingCommands = [
+        "dedupe",
+        "dlx",
+        "link",
+        "unlink"
+      ];
+      if (disablingCommands.includes(currentCommand)) {
+        return;
+      }
+
+      const dedupeMode = project.configuration.get('dedupePluginMode');
       if (!isValidDedupeMode(dedupeMode)) {
         throw new Error(`Invalid dedupePluginMode: ${dedupeMode}. Must be one of: ${dedupeModes.join(', ')}`);
       }
@@ -45,7 +60,7 @@ const plugin: Plugin = {
 async function dedupe() {
   // use env var to prevent infinite loops
   const envVar = 'IS_YARN_PLUGIN_DEDUPE_ACTIVE';
-  if (!process.env[envVar] && !process.argv.includes('dedupe')) {
+  if (!process.env[envVar]) {
     process.env[envVar] = 'true'
     // fast check for duplicates
     if (await execute('yarn dedupe --check')) {
@@ -57,6 +72,26 @@ async function dedupe() {
 
 function isValidDedupeMode(mode: unknown): mode is DedupeMode {
   return typeof mode === 'string' && dedupeModes.includes(mode as DedupeMode);
+}
+
+/**
+ * Extracts the primary command from process.argv
+ * Examples:
+ * - `yarn install` -> 'install'
+ * - `yarn add some-package` -> 'add'
+ * - `yarn dedupe --check` -> 'dedupe'
+ * - `yarn` -> 'install' (default command)
+ */
+function getYarnCommand(): string {
+  const argv = process.argv;
+
+  // Find the yarn binary index (skip node executable)
+  const yarnIndex = argv.findIndex((arg, i) => i > 0 && (arg.includes('yarn') || arg.endsWith('.js')));
+
+  // Get arguments after yarn binary and find first non-flag argument
+  return argv
+    .slice(yarnIndex + 1)
+    .find(arg => !arg.startsWith('-')) ?? 'install';
 }
 
 export default plugin;

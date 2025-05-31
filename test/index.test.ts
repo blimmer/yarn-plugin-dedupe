@@ -1,6 +1,7 @@
 import type { Project } from '@yarnpkg/core';
 import { execute } from '@yarnpkg/shell';
-import plugin from '../sources/index';
+import plugin, { type DedupeMode } from '../sources/index';
+import { when } from 'jest-when';
 
 jest.mock('@yarnpkg/shell', () => ({
   execute: jest.fn()
@@ -8,7 +9,6 @@ jest.mock('@yarnpkg/shell', () => ({
 const mockExecute = execute as jest.MockedFunction<typeof execute>;
 
 describe('yarn-plugin-dedupe', () => {
-  let mockProject: Project;
   let originalEnv: NodeJS.ProcessEnv;
   let originalArgv: string[];
 
@@ -16,13 +16,6 @@ describe('yarn-plugin-dedupe', () => {
     // Save original environment and argv
     originalEnv = { ...process.env };
     originalArgv = [...process.argv];
-
-    // Create a mock project with configuration
-    mockProject = {
-      configuration: {
-        get: jest.fn()
-      }
-    } as any;
 
     // Clear mock calls
     jest.clearAllMocks();
@@ -34,6 +27,21 @@ describe('yarn-plugin-dedupe', () => {
     process.argv = originalArgv;
   });
 
+  function setupTest(dedupePluginMode: DedupeMode | undefined, options: Record<string, unknown> = {}) {
+    const configGetter = jest.fn();
+    when(configGetter).calledWith('dedupePluginMode').mockReturnValue(dedupePluginMode);
+    const mockProject = {
+      configuration: {
+        get: configGetter
+      }
+    } as unknown as Project;
+
+    return {
+      mockProject,
+      options,
+    }
+  }
+
   describe('plugin configuration', () => {
     it('should have correct configuration schema', () => {
       const config = plugin.configuration as any;
@@ -44,29 +52,35 @@ describe('yarn-plugin-dedupe', () => {
   });
 
   describe('afterAllInstalled hook', () => {
-    it('should throw error for invalid dedupePluginMode', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('invalid-mode');
+    it('should always disable if immutable is set', async () => {
+      const { mockProject, options } = setupTest("always", { immutable: true });
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
-      await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow(
+      expect(mockExecute).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for invalid dedupePluginMode', async () => {
+      const { mockProject, options } = setupTest("invalid-mode" as any);
+
+      await expect(plugin.hooks.afterAllInstalled(mockProject, options)).rejects.toThrow(
         'Invalid dedupePluginMode: invalid-mode. Must be one of: always, dependabot-only, never'
       );
     });
 
     it('should not dedupe when mode is "never"', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('never');
-
-      await plugin.hooks.afterAllInstalled(mockProject);
+      const { mockProject, options } = setupTest("never");
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).not.toHaveBeenCalled();
     });
 
     it('should dedupe when mode is "always"', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('always');
+      const { mockProject, options } = setupTest("always");
       mockExecute
         .mockResolvedValueOnce(1) // dedupe --check returns truthy (duplicates found)
         .mockResolvedValueOnce(0); // dedupe command succeeds
 
-      await plugin.hooks.afterAllInstalled(mockProject);
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).toHaveBeenCalledTimes(2);
       expect(mockExecute).toHaveBeenNthCalledWith(1, 'yarn dedupe --check');
@@ -74,23 +88,23 @@ describe('yarn-plugin-dedupe', () => {
     });
 
     it('should not run actual dedupe if check returns false (no duplicates)', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('always');
+      const { mockProject, options } = setupTest("always");
       mockExecute.mockResolvedValueOnce(0); // dedupe --check returns falsy (no duplicates)
 
-      await plugin.hooks.afterAllInstalled(mockProject);
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).toHaveBeenCalledTimes(1);
       expect(mockExecute).toHaveBeenCalledWith('yarn dedupe --check');
     });
 
     it('should dedupe when mode is "dependabot-only" and DEPENDABOT env var is true', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot-only');
+      const { mockProject, options } = setupTest("dependabot-only");
       process.env.DEPENDABOT = 'true';
       mockExecute
         .mockResolvedValueOnce(1) // dedupe --check returns truthy
         .mockResolvedValueOnce(0); // dedupe command succeeds
 
-      await plugin.hooks.afterAllInstalled(mockProject);
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).toHaveBeenCalledTimes(2);
       expect(mockExecute).toHaveBeenNthCalledWith(1, 'yarn dedupe --check');
@@ -98,19 +112,19 @@ describe('yarn-plugin-dedupe', () => {
     });
 
     it('should not dedupe when mode is "dependabot-only" and DEPENDABOT env var is not true', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot-only');
+      const { mockProject, options } = setupTest("dependabot-only");
       process.env.DEPENDABOT = 'false';
 
-      await plugin.hooks.afterAllInstalled(mockProject);
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).not.toHaveBeenCalled();
     });
 
     it('should not dedupe when mode is "dependabot-only" and DEPENDABOT env var is undefined', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot-only');
+      const { mockProject, options } = setupTest("dependabot-only");
       delete process.env.DEPENDABOT;
 
-      await plugin.hooks.afterAllInstalled(mockProject);
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).not.toHaveBeenCalled();
     });
@@ -118,30 +132,30 @@ describe('yarn-plugin-dedupe', () => {
 
   describe('dedupe function infinite loop prevention', () => {
     it('should not run dedupe if IS_YARN_PLUGIN_DEDUPE_ACTIVE is set', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('always');
+      const { mockProject, options } = setupTest("always");
       process.env.IS_YARN_PLUGIN_DEDUPE_ACTIVE = 'true';
 
-      await plugin.hooks.afterAllInstalled(mockProject);
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).not.toHaveBeenCalled();
     });
 
     it('should not run dedupe if argv includes "dedupe"', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('always');
+      const { mockProject, options } = setupTest("always");
       process.argv.push('dedupe');
 
-      await plugin.hooks.afterAllInstalled(mockProject);
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).not.toHaveBeenCalled();
     });
 
     it('should set IS_YARN_PLUGIN_DEDUPE_ACTIVE environment variable when running dedupe', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('always');
+      const { mockProject, options } = setupTest("always");
       mockExecute
         .mockResolvedValueOnce(1) // dedupe --check returns truthy
         .mockResolvedValueOnce(0); // dedupe command succeeds
 
-      await plugin.hooks.afterAllInstalled(mockProject);
+      await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(process.env.IS_YARN_PLUGIN_DEDUPE_ACTIVE).toBe('true');
     });
@@ -149,32 +163,32 @@ describe('yarn-plugin-dedupe', () => {
 
   describe('edge cases', () => {
     it('should handle execute rejection gracefully', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('always');
+      const { mockProject, options } = setupTest("always");
       mockExecute.mockRejectedValueOnce(new Error('Command failed'));
 
-      await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow('Command failed');
+      await expect(plugin.hooks.afterAllInstalled(mockProject, options)).rejects.toThrow('Command failed');
     });
 
     it('should handle non-string dedupePluginMode', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue(123);
+      const { mockProject, options } = setupTest(123 as any);
 
-      await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow(
+      await expect(plugin.hooks.afterAllInstalled(mockProject, options)).rejects.toThrow(
         'Invalid dedupePluginMode: 123. Must be one of: always, dependabot-only, never'
       );
     });
 
     it('should handle null dedupePluginMode', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue(null);
+      const { mockProject, options } = setupTest(null as any);
 
-      await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow(
+      await expect(plugin.hooks.afterAllInstalled(mockProject, options)).rejects.toThrow(
         'Invalid dedupePluginMode: null. Must be one of: always, dependabot-only, never'
       );
     });
 
     it('should handle undefined dedupePluginMode', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue(undefined);
+      const { mockProject, options } = setupTest(undefined);
 
-      await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow(
+      await expect(plugin.hooks.afterAllInstalled(mockProject, options)).rejects.toThrow(
         'Invalid dedupePluginMode: undefined. Must be one of: always, dependabot-only, never'
       );
     });
