@@ -1,7 +1,8 @@
-import {Plugin} from '@yarnpkg/core';
+import {Plugin, type Project} from '@yarnpkg/core';
 import {execute} from '@yarnpkg/shell';
 
 const dedupeModes = ['always', 'dependabot', 'never'] as const;
+type DedupeMode = typeof dedupeModes[number];
 
 const plugin: Plugin = {
   configuration: {
@@ -14,11 +15,11 @@ const plugin: Plugin = {
     }
   },
   hooks: {
-    afterAllInstalled: async (project) => {
+    afterAllInstalled: async (project: Project) => {
       const dedupeMode = project.configuration.get('dedupePluginMode');
 
       // Ensure dedupeMode is one of the valid choices
-      if (!dedupeModes.includes(dedupeMode)) {
+      if (!isValidDedupeMode(dedupeMode)) {
         throw new Error(`Invalid dedupePluginMode: ${dedupeMode}. Must be one of: ${dedupeModes.join(', ')}`);
       }
 
@@ -52,6 +53,10 @@ async function dedupe() {
       await execute('yarn dedupe')
     }
   }
+}
+
+function isValidDedupeMode(mode: unknown): mode is DedupeMode {
+  return typeof mode === 'string' && dedupeModes.includes(mode as DedupeMode);
 }
 
 export default plugin;
