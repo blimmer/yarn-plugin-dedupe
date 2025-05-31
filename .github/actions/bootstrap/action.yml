@@ -1,0 +1,14 @@
+name: Bootstrap
+description: Common boilerplate setup for workflows
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .nvmrc
+        cache: 'yarn'
+    - run: corepack enable
+      shell: bash
+    - run: yarn install
+      shell: bash
