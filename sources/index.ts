@@ -1,30 +1,20 @@
 import {Plugin} from '@yarnpkg/core';
-import {BaseCommand} from '@yarnpkg/cli';
-import {Option} from 'clipanion';
-
-class HelloWorldCommand extends BaseCommand {
-  static paths = [
-    [`hello`, `world`],
-  ];
-
-  name = Option.String(`--name`, `John Doe`, {
-    description: `Your name`,
-  });
-
-  async execute() {
-    console.log(`Hello ${this.name}!`);
-  }
-}
 
 const plugin: Plugin = {
+  configuration: {
+    // @ts-expect-error for some reason, the types don't allow adding to the configuration
+    dedupePluginMode: {
+      type: 'string',
+      default: 'always',
+      description: 'When to deduplicate packages. Always deduplicates all packages after any install command. Dependabot deduplicates only packages that are updated by Dependabot via GitHub Actions. None disables auto-deduplication.',
+      choices: ['always', 'dependabot', 'none'],
+    }
+  },
   hooks: {
-    afterAllInstalled: () => {
-      console.log(`What a great install, am I right?`);
+    afterAllInstalled: async (project) => {
+      const dedupeMode = project.configuration.get('dedupePluginMode');
     },
   },
-  commands: [
-    HelloWorldCommand,
-  ],
 };
 
 export default plugin;
