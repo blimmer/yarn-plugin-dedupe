@@ -1,0 +1,22 @@
+{
+  "name": "yarn-plugin-dedupe",
+  "packageManager": "yarn@4.9.1",
+  "private": true,
+  "main": "./sources/index.ts",
+  "dependencies": {
+    "@yarnpkg/cli": "^4.7.0",
+    "@yarnpkg/core": "^4.2.1",
+    "clipanion": "^4.0.0-rc.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@yarnpkg/builder": "^4.2.1",
+    "rimraf": "5.0.0",
+    "typescript": "^5.5.2"
+  },
+  "scripts": {
+    "build": "builder build plugin",
+    "build:dev": "builder build plugin --no-minify",
+    "clean": "rimraf bundles"
+  }
+}
