@@ -1,4 +1,7 @@
 import {Plugin} from '@yarnpkg/core';
+import {execute} from '@yarnpkg/shell';
+
+const dedupeModes = ['always', 'dependabot', 'never'] as const;
 
 const plugin: Plugin = {
   configuration: {
@@ -7,14 +10,52 @@ const plugin: Plugin = {
       type: 'string',
       default: 'always',
       description: 'When to deduplicate packages. Always deduplicates all packages after any install command. Dependabot deduplicates only packages that are updated by Dependabot via GitHub Actions. None disables auto-deduplication.',
-      choices: ['always', 'dependabot', 'none'],
+      choices: dedupeModes,
     }
   },
   hooks: {
     afterAllInstalled: async (project) => {
       const dedupeMode = project.configuration.get('dedupePluginMode');
+
+      // Ensure dedupeMode is one of the valid choices
+      if (!dedupeModes.includes(dedupeMode)) {
+        throw new Error(`Invalid dedupePluginMode: ${dedupeMode}. Must be one of: ${dedupeModes.join(', ')}`);
+      }
+
+      if (dedupeMode === 'never') {
+        return;
+      }
+
+      if (dedupeMode === 'always') {
+        await dedupe();
+        return;
+      }
+
+      if (dedupeMode === 'dependabot') {
+        if (process.env.GITHUB_ACTOR === 'dependabot[bot]') {
+          await dedupe();
+        }
+        return;
+      }
     },
   },
 };
+
+async function dedupe() {
+  // use env var to prevent infinite loops
+  const envVar = 'IS_YARN_PLUGIN_DEDUPE_ACTIVE';
+  if (!process.env[envVar] && !process.argv.includes('dedupe')) {
+    process.env[envVar] = 'true'
+    console.log('Deduplicating packages...');
+    // fast check for duplicates
+    if (await execute('yarn dedupe --check')) {
+      console.log('Deduplicating packages...');
+      // run actual dedupe/link step
+      await execute('yarn dedupe')
+    } else {
+      console.log('No duplicates found, skipping deduplication.');
+    }
+  }
+}
 
 export default plugin;
