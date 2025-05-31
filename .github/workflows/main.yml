@@ -1,0 +1,22 @@
+name: Main Branch
+on:
+  push:
+    branches:
+      - main
+      - initial-implementation # TODO: remove this branch after testing
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/bootstrap
+      - run: yarn semantic-release
