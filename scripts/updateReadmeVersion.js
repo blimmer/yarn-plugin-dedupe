@@ -7,7 +7,7 @@ const path = require('path');
 const newVersion = process.argv[2];
 
 if (!newVersion) {
-  console.error('Usage: node update-readme-version.js <version>');
+  console.error('Usage: node updateReadmeVersion.js <version>');
   process.exit(1);
 }
 

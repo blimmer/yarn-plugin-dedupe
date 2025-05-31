@@ -18,7 +18,7 @@ module.exports = {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'yarn build && node scripts/update-readme-version.js ${nextRelease.version}'
+        prepareCmd: 'yarn build && node scripts/updateReadmeVersion.js ${nextRelease.version}'
       }
     ],
     [
