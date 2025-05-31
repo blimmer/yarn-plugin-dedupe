@@ -20,3 +20,5 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/bootstrap
       - run: yarn semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
