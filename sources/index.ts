@@ -46,14 +46,10 @@ async function dedupe() {
   const envVar = 'IS_YARN_PLUGIN_DEDUPE_ACTIVE';
   if (!process.env[envVar] && !process.argv.includes('dedupe')) {
     process.env[envVar] = 'true'
-    console.log('Deduplicating packages...');
     // fast check for duplicates
     if (await execute('yarn dedupe --check')) {
-      console.log('Deduplicating packages...');
       // run actual dedupe/link step
       await execute('yarn dedupe')
-    } else {
-      console.log('No duplicates found, skipping deduplication.');
     }
   }
 }
