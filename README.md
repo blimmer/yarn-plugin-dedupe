@@ -14,7 +14,7 @@ Download the latest release: [Latest Release](https://github.com/blimmer/yarn-pl
 You can install this plugin using:
 
 ```bash
-yarn plugin import https://github.com/blimmer/yarn-plugin-dedupe/releases/download/v1.0.0-alpha.3/plugin-dedupe.js
+yarn plugin import https://github.com/blimmer/yarn-plugin-dedupe/releases/download/v1.0.0/plugin-dedupe.js
 ```
 
 ## Usage
