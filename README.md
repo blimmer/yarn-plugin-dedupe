@@ -30,6 +30,13 @@ option.
 | `dependabot`       | `yarn dedupe` is run only in GitHub Actions-based dependabot update commands |
 | `none`             | automatic dedupe is disabled                                                 |
 
+### Example
+
+```yml
+# .yarnrc.yml
+dedupePluginMode: dependabot
+```
+
 ## License
 
 MIT
