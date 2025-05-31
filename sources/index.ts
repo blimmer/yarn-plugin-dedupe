@@ -1,7 +1,7 @@
 import {Plugin, type Project} from '@yarnpkg/core';
 import {execute} from '@yarnpkg/shell';
 
-const dedupeModes = ['always', 'dependabot', 'never'] as const;
+const dedupeModes = ['always', 'dependabot-only', 'never'] as const;
 type DedupeMode = typeof dedupeModes[number];
 
 const plugin: Plugin = {
@@ -10,7 +10,7 @@ const plugin: Plugin = {
     dedupePluginMode: {
       type: 'string',
       default: 'always',
-      description: 'When to deduplicate packages. Always deduplicates all packages after any install command. Dependabot deduplicates only packages that are updated by Dependabot via GitHub Actions. None disables auto-deduplication.',
+      description: 'When to deduplicate packages. `always` deduplicates all packages after any install command. `dependabot-only` deduplicates only packages that are updated by Dependabot via GitHub Actions. `never` disables auto-deduplication.',
       choices: dedupeModes,
     }
   },
@@ -32,8 +32,8 @@ const plugin: Plugin = {
         return;
       }
 
-      if (dedupeMode === 'dependabot') {
-        if (process.env.GITHUB_ACTOR === 'dependabot[bot]') {
+      if (dedupeMode === 'dependabot-only') {
+        if (process.env.DEPENDABOT === 'true') {
           await dedupe();
         }
         return;

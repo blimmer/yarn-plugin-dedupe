@@ -39,7 +39,7 @@ describe('yarn-plugin-dedupe', () => {
       const config = plugin.configuration as any;
       expect(config.dedupePluginMode.type).toBe('string');
       expect(config.dedupePluginMode.default).toBe('always');
-      expect(config.dedupePluginMode.choices).toEqual(['always', 'dependabot', 'never']);
+      expect(config.dedupePluginMode.choices).toEqual(['always', 'dependabot-only', 'never']);
     });
   });
 
@@ -48,7 +48,7 @@ describe('yarn-plugin-dedupe', () => {
       (mockProject.configuration.get as jest.Mock).mockReturnValue('invalid-mode');
 
       await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow(
-        'Invalid dedupePluginMode: invalid-mode. Must be one of: always, dependabot, never'
+        'Invalid dedupePluginMode: invalid-mode. Must be one of: always, dependabot-only, never'
       );
     });
 
@@ -83,9 +83,9 @@ describe('yarn-plugin-dedupe', () => {
       expect(mockExecute).toHaveBeenCalledWith('yarn dedupe --check');
     });
 
-    it('should dedupe when mode is "dependabot" and GITHUB_ACTOR is dependabot[bot]', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot');
-      process.env.GITHUB_ACTOR = 'dependabot[bot]';
+    it('should dedupe when mode is "dependabot-only" and DEPENDABOT env var is true', async () => {
+      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot-only');
+      process.env.DEPENDABOT = 'true';
       mockExecute
         .mockResolvedValueOnce(1) // dedupe --check returns truthy
         .mockResolvedValueOnce(0); // dedupe command succeeds
@@ -97,18 +97,18 @@ describe('yarn-plugin-dedupe', () => {
       expect(mockExecute).toHaveBeenNthCalledWith(2, 'yarn dedupe');
     });
 
-    it('should not dedupe when mode is "dependabot" and GITHUB_ACTOR is not dependabot[bot]', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot');
-      process.env.GITHUB_ACTOR = 'some-user';
+    it('should not dedupe when mode is "dependabot-only" and DEPENDABOT env var is not true', async () => {
+      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot-only');
+      process.env.DEPENDABOT = 'false';
 
       await plugin.hooks.afterAllInstalled(mockProject);
 
       expect(mockExecute).not.toHaveBeenCalled();
     });
 
-    it('should not dedupe when mode is "dependabot" and GITHUB_ACTOR is undefined', async () => {
-      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot');
-      delete process.env.GITHUB_ACTOR;
+    it('should not dedupe when mode is "dependabot-only" and DEPENDABOT env var is undefined', async () => {
+      (mockProject.configuration.get as jest.Mock).mockReturnValue('dependabot-only');
+      delete process.env.DEPENDABOT;
 
       await plugin.hooks.afterAllInstalled(mockProject);
 
@@ -159,7 +159,7 @@ describe('yarn-plugin-dedupe', () => {
       (mockProject.configuration.get as jest.Mock).mockReturnValue(123);
 
       await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow(
-        'Invalid dedupePluginMode: 123. Must be one of: always, dependabot, never'
+        'Invalid dedupePluginMode: 123. Must be one of: always, dependabot-only, never'
       );
     });
 
@@ -167,7 +167,7 @@ describe('yarn-plugin-dedupe', () => {
       (mockProject.configuration.get as jest.Mock).mockReturnValue(null);
 
       await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow(
-        'Invalid dedupePluginMode: null. Must be one of: always, dependabot, never'
+        'Invalid dedupePluginMode: null. Must be one of: always, dependabot-only, never'
       );
     });
 
@@ -175,7 +175,7 @@ describe('yarn-plugin-dedupe', () => {
       (mockProject.configuration.get as jest.Mock).mockReturnValue(undefined);
 
       await expect(plugin.hooks.afterAllInstalled(mockProject)).rejects.toThrow(
-        'Invalid dedupePluginMode: undefined. Must be one of: always, dependabot, never'
+        'Invalid dedupePluginMode: undefined. Must be one of: always, dependabot-only, never'
       );
     });
   });
