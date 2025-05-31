@@ -58,15 +58,10 @@ const plugin: Plugin = {
 };
 
 async function dedupe() {
-  // use env var to prevent infinite loops
-  const envVar = 'IS_YARN_PLUGIN_DEDUPE_ACTIVE';
-  if (!process.env[envVar]) {
-    process.env[envVar] = 'true'
-    // fast check for duplicates
-    if (await execute('yarn dedupe --check')) {
-      // run actual dedupe/link step
-      await execute('yarn dedupe')
-    }
+  // fast check for duplicates
+  if (await execute('yarn dedupe --check')) {
+    // run actual dedupe/link step
+    await execute('yarn dedupe')
   }
 }
 

@@ -51,6 +51,22 @@ describe('yarn-plugin-dedupe', () => {
     });
   });
 
+  describe('disabling commands', () => {
+    it.each([
+      ["dedupe", "dedupe"],
+      ["dlx", "dlx"],
+      ["link", "link"],
+      ["unlink", "unlink"]
+    ])('should not run dedupe if command is %s', async (command) => {
+      const { mockProject, options } = setupTest("always");
+      process.argv.push(command);
+
+      await plugin.hooks.afterAllInstalled(mockProject, options);
+
+      expect(mockExecute).not.toHaveBeenCalled();
+    });
+  });
+
   describe('afterAllInstalled hook', () => {
     it('should always disable if immutable is set', async () => {
       const { mockProject, options } = setupTest("always", { immutable: true });
@@ -127,37 +143,6 @@ describe('yarn-plugin-dedupe', () => {
       await plugin.hooks.afterAllInstalled(mockProject, options);
 
       expect(mockExecute).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('dedupe function infinite loop prevention', () => {
-    it('should not run dedupe if IS_YARN_PLUGIN_DEDUPE_ACTIVE is set', async () => {
-      const { mockProject, options } = setupTest("always");
-      process.env.IS_YARN_PLUGIN_DEDUPE_ACTIVE = 'true';
-
-      await plugin.hooks.afterAllInstalled(mockProject, options);
-
-      expect(mockExecute).not.toHaveBeenCalled();
-    });
-
-    it('should not run dedupe if argv includes "dedupe"', async () => {
-      const { mockProject, options } = setupTest("always");
-      process.argv.push('dedupe');
-
-      await plugin.hooks.afterAllInstalled(mockProject, options);
-
-      expect(mockExecute).not.toHaveBeenCalled();
-    });
-
-    it('should set IS_YARN_PLUGIN_DEDUPE_ACTIVE environment variable when running dedupe', async () => {
-      const { mockProject, options } = setupTest("always");
-      mockExecute
-        .mockResolvedValueOnce(1) // dedupe --check returns truthy
-        .mockResolvedValueOnce(0); // dedupe command succeeds
-
-      await plugin.hooks.afterAllInstalled(mockProject, options);
-
-      expect(process.env.IS_YARN_PLUGIN_DEDUPE_ACTIVE).toBe('true');
     });
   });
 
