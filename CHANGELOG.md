@@ -1,3 +1,10 @@
+# [1.0.0-alpha.3](https://github.com/blimmer/yarn-plugin-dedupe/compare/v1.0.0-alpha.2...v1.0.0-alpha.3) (2025-05-31)
+
+
+### Bug Fixes
+
+* dependabot only mode ([2550784](https://github.com/blimmer/yarn-plugin-dedupe/commit/25507843b2afec2b74809d1a505d604a39ff5575))
+
 # [1.0.0-alpha.2](https://github.com/blimmer/yarn-plugin-dedupe/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2025-05-31)
 
 
