@@ -28,7 +28,7 @@ option.
 | ------------------ | ---------------------------------------------------------------------------- |
 | `always` (default) | `yarn dedupe` is run after every `yarn` install command                      |
 | `dependabot-only`  | `yarn dedupe` is run only in GitHub Actions-based dependabot update commands |
-| `none`             | automatic dedupe is disabled                                                 |
+| `never`            | automatic dedupe is disabled                                                 |
 
 ### Example
 
