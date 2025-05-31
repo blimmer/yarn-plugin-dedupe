@@ -12,8 +12,23 @@ permissions:
   actions: read
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/bootstrap
+      - run: yarn build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/bootstrap
+      - run: yarn test
+
   deploy:
     runs-on: ubuntu-latest
+    needs: [build, test]
     steps:
       - uses: actions/checkout@v4
         with:
