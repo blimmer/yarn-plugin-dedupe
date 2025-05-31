@@ -19,7 +19,7 @@ yarn plugin import https://github.com/blimmer/yarn-plugin-dedupe/releases/downlo
 
 ## Usage
 
-By default, the plugin will automatically dedupe after all `install` commands.
+By default, the plugin will automatically dedupe after all commands that install packages.
 
 You can configure this behavior in your `.yarnrc.yml` file via the `dedupePluginMode` configuration
 option.
