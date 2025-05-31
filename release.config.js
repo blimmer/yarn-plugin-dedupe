@@ -18,7 +18,7 @@ module.exports = {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'yarn build && node -e "const fs = require(\'fs\'); const content = fs.readFileSync(\'README.md\', \'utf8\'); const updated = content.replace(/download\/v[^\/]+\/plugin-dedupe\\.js/g, \'download/v${nextRelease.version}/plugin-dedupe.js\'); fs.writeFileSync(\'README.md\', updated);"'
+        prepareCmd: 'yarn build && node scripts/update-readme-version.js ${nextRelease.version}'
       }
     ],
     [
