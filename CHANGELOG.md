@@ -1,3 +1,10 @@
+# [1.0.0-alpha.2](https://github.com/blimmer/yarn-plugin-dedupe/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2025-05-31)
+
+
+### Bug Fixes
+
+* require build/test before deploy ([ff98f07](https://github.com/blimmer/yarn-plugin-dedupe/commit/ff98f0775c471a2ada7edc5120f1f6e850ee6500))
+
 # 1.0.0-alpha.1 (2025-05-31)
 
 
